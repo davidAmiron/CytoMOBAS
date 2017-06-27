@@ -55,7 +55,7 @@ public class DataWriter {
 		String subnetFile;
 		int subnetNum = 1;
 		
-		// For each subnetwork write it to a file
+		// For each subnetwork write it to a file, if it has more than 2 nodes
 		for(SubnetData data: subnetDatas)
 		{
 			subnetFile = subnetsDir + "/subnet_" + subnetNum + ".txt";

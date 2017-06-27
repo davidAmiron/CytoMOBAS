@@ -78,6 +78,14 @@ public class OptionsPanel extends JFrame implements ActionListener{
 	private JLabel lblPermutations;
 	private JTextField tfPermutations;
 	
+	// Absent Node Score
+	private JPanel pnlAbsentNodeScore;
+	private JLabel lblAbsentNodeScore;
+	private ButtonGroup btngrpAbsentNodeScore;
+	private JRadioButton rdbtnAsZero;
+	private JRadioButton rdbtnAsOne;
+	private JRadioButton rdbtnAsAverage;
+	
 	// Submit
 	JButton btnSubmit;
 	
@@ -221,6 +229,30 @@ public class OptionsPanel extends JFrame implements ActionListener{
 		lblPermutations.setLabelFor(tfPermutations);
 		
 		
+		// Absent Node Score
+		pnlAbsentNodeScore = new JPanel(new FlowLayout());
+		
+		lblAbsentNodeScore = new JLabel("No Node Score:");
+		pnlAbsentNodeScore.add(lblAbsentNodeScore);
+		
+		btngrpAbsentNodeScore = new ButtonGroup();
+		
+		rdbtnAsZero = new JRadioButton("Treat as 0", true);
+		rdbtnAsZero.setActionCommand("TREAT_AS_ZERO");
+		btngrpAbsentNodeScore.add(rdbtnAsZero);
+		pnlAbsentNodeScore.add(rdbtnAsZero);
+		
+		rdbtnAsOne = new JRadioButton("Treat as 1", true);
+		rdbtnAsOne.setActionCommand("TREAT_AS_ONE");
+		btngrpAbsentNodeScore.add(rdbtnAsOne);
+		pnlAbsentNodeScore.add(rdbtnAsOne);
+		
+		rdbtnAsAverage = new JRadioButton("Treat as Average", true);
+		rdbtnAsAverage.setActionCommand("TREAT_AS_AVERAGE");
+		btngrpAbsentNodeScore.add(rdbtnAsAverage);
+		pnlAbsentNodeScore.add(rdbtnAsAverage);
+		
+		
 		// Submit
 		btnSubmit = new JButton("Submit");
 		btnSubmit.addActionListener(this);
@@ -234,7 +266,7 @@ public class OptionsPanel extends JFrame implements ActionListener{
 		
 		
 		// Add panels
-		setLayout(new GridLayout(9, 1));
+		setLayout(new GridLayout(10, 1));
 		add(pnlProjectName);
 		add(pnlNodeScore);
 		add(pnlEdgeScore);
@@ -242,6 +274,7 @@ public class OptionsPanel extends JFrame implements ActionListener{
 		add(pnlNodeScoreAttribute);
 		add(pnlBackgroundNodeScoreAttribute);
 		add(pnlPermutations);
+		add(pnlAbsentNodeScore);
 		add(btnSubmit);
 		add(pnlError);
 		
@@ -258,12 +291,13 @@ public class OptionsPanel extends JFrame implements ActionListener{
 		// Get all parameters, and validate them
 		
 		String projectName = "";
-		NodeScoreMethod nodeScoreMethod = NodeScoreMethod.P_VALUES;
-		EdgeScoreMethod edgeScoreMethod = EdgeScoreMethod.MULTIPLICATION;
+		NodeScoreMethod nodeScoreMethod = null;
+		EdgeScoreMethod edgeScoreMethod = null;
 		int permutations = -1;
 		double connectivity = 0.5;
 		String nodeScoreAttribute = "";
 		String backgroundNodeScoreAttribute = "";
+		AbsentNodeScoreTreatment absentNodeScoreTreatment = null;
 		
 		boolean error = false;
 		
@@ -280,16 +314,23 @@ public class OptionsPanel extends JFrame implements ActionListener{
 		}
 		
 		String nodeScoreMethodRaw = btngrpNodeScore.getSelection().getActionCommand();
-		switch (nodeScoreMethodRaw){
+		switch (nodeScoreMethodRaw) {
 		case "P_VALUES": nodeScoreMethod = NodeScoreMethod.P_VALUES; break;
 		case "FOLD_CHANGE": nodeScoreMethod = NodeScoreMethod.FOLD_CHANGE; break;
 		}
 		
 		String edgeScoreMethodRaw = btngrpEdgeScore.getSelection().getActionCommand();
-		switch (edgeScoreMethodRaw){
+		switch (edgeScoreMethodRaw) {
 		case "MULTIPLICATION": edgeScoreMethod = EdgeScoreMethod.MULTIPLICATION; break;
 		case "MINIMUM": edgeScoreMethod = EdgeScoreMethod.MINIMUM; break;
 		case "CORRELATION": edgeScoreMethod = EdgeScoreMethod.CORRELATION; break;
+		}
+		
+		String absentNodeScoreRaw = btngrpAbsentNodeScore.getSelection().getActionCommand();
+		switch (absentNodeScoreRaw) {
+		case "TREAT_AS_ZERO": absentNodeScoreTreatment = AbsentNodeScoreTreatment.ZERO; break;
+		case "TREAT_AS_ONE": absentNodeScoreTreatment = AbsentNodeScoreTreatment.ONE;
+		case "TREAT_AS_AVERAGE": absentNodeScoreTreatment = AbsentNodeScoreTreatment.AVERAGE;
 		}
 
 		
@@ -318,7 +359,7 @@ public class OptionsPanel extends JFrame implements ActionListener{
 		if (!error)
 		{
 			dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
-			mainTaskFactory = new MoBaSMainTaskFactory(utils, projectName, nodeScoreMethod, edgeScoreMethod, permutations, connectivity, nodeScoreAttribute, backgroundNodeScoreAttribute);
+			mainTaskFactory = new MoBaSMainTaskFactory(utils, projectName, nodeScoreMethod, edgeScoreMethod, permutations, connectivity, nodeScoreAttribute, backgroundNodeScoreAttribute, absentNodeScoreTreatment);
 			utils.getTaskManager().execute(mainTaskFactory.createTaskIterator());
 		}
 	}

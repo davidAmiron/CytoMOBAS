@@ -31,6 +31,7 @@ public class MoBaSMainTask extends AbstractTask {
 	private double connectivity;
 	private String nodeScoreAttribute;
 	private String backgroundNodeScoreAttribute;
+	private AbsentNodeScoreTreatment absentNodeScoreTreatment;
 	
 	
 	// Utils
@@ -51,6 +52,7 @@ public class MoBaSMainTask extends AbstractTask {
 	private double scoresMean;
 	private Class nodeScoreAttributeType;
 	private Class backgroundNodeScoreAttributeType;
+	private double defaultNodeScore;
 	
 	
 	// Results
@@ -59,7 +61,10 @@ public class MoBaSMainTask extends AbstractTask {
 	
 	private Logger logger = Logger.getLogger(MoBaSMainTask.class.getName());
 	
-	public MoBaSMainTask(MoBaSUtilities utils, String projectName, NodeScoreMethod nodeScoreMethod, EdgeScoreMethod edgeScoreMethod, int permutations, double connectivity, String nodeScoreAttribute, String backgroundNodeScoreAttribute)
+	public MoBaSMainTask(MoBaSUtilities utils, String projectName,
+			NodeScoreMethod nodeScoreMethod, EdgeScoreMethod edgeScoreMethod,
+			int permutations, double connectivity, String nodeScoreAttribute,
+			String backgroundNodeScoreAttribute, AbsentNodeScoreTreatment absentNodeScoreTreatment)
 	{
 		this.utils = utils;
 		this.projectName = projectName;
@@ -82,6 +87,14 @@ public class MoBaSMainTask extends AbstractTask {
 		this.nodeScoreAttributeType = networkMain.getDefaultNodeTable().getColumn(nodeScoreAttribute).getType();
 		if(!this.backgroundNodeScoreAttribute.equals("None"))
 			this.backgroundNodeScoreAttributeType = networkMain.getDefaultNodeTable().getColumn(backgroundNodeScoreAttribute).getType();
+		this.absentNodeScoreTreatment = absentNodeScoreTreatment;
+		if (absentNodeScoreTreatment == AbsentNodeScoreTreatment.ZERO)
+			defaultNodeScore = 0;
+		else if (absentNodeScoreTreatment == AbsentNodeScoreTreatment.ONE)
+			defaultNodeScore = 1;
+		else if (absentNodeScoreTreatment == AbsentNodeScoreTreatment.AVERAGE)
+			defaultNodeScore = getScoresMeanWithoutNulls();
+			
 	}
 	
 	/**
@@ -92,10 +105,10 @@ public class MoBaSMainTask extends AbstractTask {
 		tm.setTitle("MoBaS");
 		tm.setProgress(-1);
 		dataWriter = new DataWriter(projectName);
-		
+
 		// Get mean of scores
 		scoresMean = getScoresMean();
-		
+		new Dump("Potato chip");
 		// Initialize subnetwork to work on
 		networkMainRootNet = utils.getRootNetworkManager().getRootNetwork(networkMain);
 		networkSubMain = networkMainRootNet.addSubNetwork(networkMain.getNodeList(), networkMain.getEdgeList());
@@ -734,19 +747,34 @@ public class MoBaSMainTask extends AbstractTask {
 	 * @param node The node to score
 	 * @return The score as a double
 	 */
-	private double getDoubleScoreValue(CyNode node)
+	private double getDoubleScoreValue(CyNode node, double defaultValue)
 	{
 		if(nodeScoreAttributeType.equals(Integer.class))
 		{
-			return networkMain.getRow(node).get(nodeScoreAttribute, Integer.class).doubleValue();
+			try {
+				return networkMain.getRow(node).get(nodeScoreAttribute, Integer.class, defaultValue).doubleValue();
+			} catch (Exception e) {
+				new Dump("A");
+				throw new RuntimeException(e.getMessage());
+			}
 		}
 		else if (nodeScoreAttributeType.equals(Long.class))
 		{
-			return networkMain.getRow(node).get(nodeScoreAttribute, Long.class).doubleValue();
+			try {
+				return networkMain.getRow(node).get(nodeScoreAttribute, Long.class, defaultValue).doubleValue();
+			} catch (Exception e) {
+				new Dump("B");
+				throw new RuntimeException(e.getMessage());
+			}
 		}
 		else if (nodeScoreAttributeType.equals(Double.class))
 		{
-			return networkMain.getRow(node).get(nodeScoreAttribute, Double.class);
+			try {
+				return networkMain.getRow(node).get(nodeScoreAttribute, Double.class, defaultValue);
+			} catch (Exception e) {
+				new Dump(e.getMessage());
+				throw new RuntimeException(e.getMessage());
+			}
 		}
 		else
 		{
@@ -759,19 +787,31 @@ public class MoBaSMainTask extends AbstractTask {
 	 * @param node
 	 * @return The score as a double
 	 */
-	private double getDoubleBackgroundScore(CyNode node)
+	private double getDoubleBackgroundScore(CyNode node, double defaultValue)
 	{
 		if(backgroundNodeScoreAttributeType.equals(Integer.class))
 		{
-			return networkMain.getRow(node).get(backgroundNodeScoreAttribute, Integer.class).doubleValue();
+			try {
+				return networkMain.getRow(node).get(backgroundNodeScoreAttribute, Integer.class, defaultValue).doubleValue();
+			} catch (Exception e) {
+				throw new RuntimeException(e.getMessage());
+			}
 		}
 		else if (backgroundNodeScoreAttributeType.equals(Long.class))
 		{
-			return networkMain.getRow(node).get(backgroundNodeScoreAttribute, Long.class).doubleValue();
+			try {
+				return networkMain.getRow(node).get(backgroundNodeScoreAttribute, Long.class, defaultValue).doubleValue();
+			} catch (Exception e) {
+				throw new RuntimeException(e.getMessage());
+			}
 		}
 		else if (backgroundNodeScoreAttributeType.equals(Double.class))
 		{
-			return networkMain.getRow(node).get(backgroundNodeScoreAttribute, Double.class);
+			try {
+				return networkMain.getRow(node).get(backgroundNodeScoreAttribute, Double.class, defaultValue);
+			} catch (Exception e) {
+				throw new RuntimeException(e.getMessage());
+			}
 		}
 		else
 		{
@@ -779,9 +819,9 @@ public class MoBaSMainTask extends AbstractTask {
 		}
 	}
 	
+	//private double tryGetDoubleScoreValue
 	
-	//private double [] getDoubleCorrelationList
-	
+		
 	/**
 	 * Get the mean of all the scores
 	 * @return
@@ -792,7 +832,19 @@ public class MoBaSMainTask extends AbstractTask {
 		List<CyNode> nodes = networkMain.getNodeList();
 		for(CyNode node: nodes)
 		{
-			mean += getDoubleScoreValue(node);
+			mean += getDoubleScoreValue(node, defaultNodeScore);
+		}
+		mean /= nodes.size();
+		return mean;
+	}
+	
+	private double getScoresMeanWithoutNulls()
+	{
+		double mean = 0;
+		List<CyNode> nodes = networkMain.getNodeList();
+		for(CyNode node: nodes)
+		{
+			mean += getDoubleScoreValue(node, );
 		}
 		mean /= nodes.size();
 		return mean;
