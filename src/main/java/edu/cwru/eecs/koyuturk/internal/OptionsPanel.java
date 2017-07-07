@@ -82,8 +82,7 @@ public class OptionsPanel extends JFrame implements ActionListener{
 	private JPanel pnlAbsentNodeScore;
 	private JLabel lblAbsentNodeScore;
 	private ButtonGroup btngrpAbsentNodeScore;
-	private JRadioButton rdbtnAsZero;
-	private JRadioButton rdbtnAsOne;
+	private JRadioButton rdbtnIgnore;
 	private JRadioButton rdbtnAsAverage;
 	
 	// Submit
@@ -155,14 +154,8 @@ public class OptionsPanel extends JFrame implements ActionListener{
 		
 		rdbtnCorrelation = new JRadioButton("Correlation (for time series)");
 		rdbtnCorrelation.setActionCommand("CORRELATION");
-		/*rdbtnCorrelation.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent evt)
-			{
-				btngrpNodeScore.clearSelection();
-			}
-		});*/
-		btngrpEdgeScore.add(rdbtnCorrelation);
-		pnlEdgeScore.add(rdbtnCorrelation);
+		//btngrpEdgeScore.add(rdbtnCorrelation);   //////////// Uncomment these two lines to bring back
+		//pnlEdgeScore.add(rdbtnCorrelation);      //////////// the correlation option.
 		
 		
 		// Connectivity
@@ -232,22 +225,17 @@ public class OptionsPanel extends JFrame implements ActionListener{
 		// Absent Node Score
 		pnlAbsentNodeScore = new JPanel(new FlowLayout());
 		
-		lblAbsentNodeScore = new JLabel("No Node Score:");
+		lblAbsentNodeScore = new JLabel("Missing Node Score:");
 		pnlAbsentNodeScore.add(lblAbsentNodeScore);
 		
 		btngrpAbsentNodeScore = new ButtonGroup();
 		
-		rdbtnAsZero = new JRadioButton("Treat as 0", true);
-		rdbtnAsZero.setActionCommand("TREAT_AS_ZERO");
-		btngrpAbsentNodeScore.add(rdbtnAsZero);
-		pnlAbsentNodeScore.add(rdbtnAsZero);
+		rdbtnIgnore = new JRadioButton("Ignore", true);
+		rdbtnIgnore.setActionCommand("IGNORE");
+		btngrpAbsentNodeScore.add(rdbtnIgnore);
+		pnlAbsentNodeScore.add(rdbtnIgnore);
 		
-		rdbtnAsOne = new JRadioButton("Treat as 1", true);
-		rdbtnAsOne.setActionCommand("TREAT_AS_ONE");
-		btngrpAbsentNodeScore.add(rdbtnAsOne);
-		pnlAbsentNodeScore.add(rdbtnAsOne);
-		
-		rdbtnAsAverage = new JRadioButton("Treat as Average", true);
+		rdbtnAsAverage = new JRadioButton("Treat as Average", false);
 		rdbtnAsAverage.setActionCommand("TREAT_AS_AVERAGE");
 		btngrpAbsentNodeScore.add(rdbtnAsAverage);
 		pnlAbsentNodeScore.add(rdbtnAsAverage);
@@ -328,8 +316,7 @@ public class OptionsPanel extends JFrame implements ActionListener{
 		
 		String absentNodeScoreRaw = btngrpAbsentNodeScore.getSelection().getActionCommand();
 		switch (absentNodeScoreRaw) {
-		case "TREAT_AS_ZERO": absentNodeScoreTreatment = AbsentNodeScoreTreatment.ZERO; break;
-		case "TREAT_AS_ONE": absentNodeScoreTreatment = AbsentNodeScoreTreatment.ONE; break;
+		case "IGNORE": absentNodeScoreTreatment = AbsentNodeScoreTreatment.IGNORE; break;
 		case "TREAT_AS_AVERAGE": absentNodeScoreTreatment = AbsentNodeScoreTreatment.AVERAGE; break;
 		}
 

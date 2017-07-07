@@ -88,12 +88,16 @@ public class MoBaSMainTask extends AbstractTask {
 		if(!this.backgroundNodeScoreAttribute.equals("None"))
 			this.backgroundNodeScoreAttributeType = networkMain.getDefaultNodeTable().getColumn(backgroundNodeScoreAttribute).getType();
 		this.absentNodeScoreTreatment = absentNodeScoreTreatment;
-		if (absentNodeScoreTreatment == AbsentNodeScoreTreatment.ZERO)
-			defaultNodeScore = 0;
-		else if (absentNodeScoreTreatment == AbsentNodeScoreTreatment.ONE)
-			defaultNodeScore = 1;
-		//else if (absentNodeScoreTreatment == AbsentNodeScoreTreatment.AVERAGE)
-			//defaultNodeScore = getScoresMeanWithoutNulls();
+		
+		scoresMean = getScoresMean();
+		
+		if (absentNodeScoreTreatment == AbsentNodeScoreTreatment.IGNORE)
+			if (nodeScoreMethod == NodeScoreMethod.P_VALUES)
+				defaultNodeScore = 1; // Set to 1 so that if non-existent data, log(1) = 0 so it is ignored
+			else
+				defaultNodeScore = 0; // Set to 0 so that if non-existent data, multiplying by 0 ignores the node
+		else
+			defaultNodeScore = scoresMean;
 			
 	}
 	
@@ -105,9 +109,6 @@ public class MoBaSMainTask extends AbstractTask {
 		tm.setTitle("MoBaS");
 		tm.setProgress(-1);
 		dataWriter = new DataWriter(projectName);
-
-		// Get mean of scores
-		scoresMean = getScoresMean();
 
 		// Initialize subnetwork to work on
 		networkMainRootNet = utils.getRootNetworkManager().getRootNetwork(networkMain);
@@ -223,131 +224,7 @@ public class MoBaSMainTask extends AbstractTask {
 	}
 	
 	
-	/*public ArrayList<SubnetData> getSubnets(CyNetwork network)
-	{
-		///
-		// Initialize things
-		///
-		
-		// The subnetworks to return
-		ArrayList<SubnetData> subnets = new ArrayList<SubnetData>();
-		
-		
-		// The root network (subclass of CyNetwork, used for generating and organizing subnetworks)
-		CyRootNetwork rootNet = utils.getRootNetworkManager().getRootNetwork(network);
-		
-		
-		// The default node table
-		CyTable nodeTable = network.getDefaultNodeTable();
-		
-		
-		// The list of node rows, organized by score according to which node score method is used (p-values or fold change)
-		List<CyRow> nodeRows = nodeTable.getAllRows();
-		
-		//-- Sort nodeRows, first is the best (p-values want to be small, fold change large)
-		NodeRowsComparatorByDoubleColumn comparer = new NodeRowsComparatorByDoubleColumn(nodeScoreAttribute);
-		if(nodeScoreMethod == NodeScoreMethod.FOLD_CHANGE)
-		{
-			Collections.sort(nodeRows, comparer);
-			Collections.reverse(nodeRows);
-		}
-		else if(nodeScoreMethod == NodeScoreMethod.P_VALUES)
-		{
-			Collections.sort(nodeRows, comparer);
-		}
-
-		MoBaSMainUtils mUtils = new MoBaSMainUtils(network, nodeRows);
-		
-		
-		///
-		// Something here
-		///
-		
-		
-		CySubNetwork subnet;
-		List<CyNode> subnetNodes;
-		List<CyNode> neighborNodes = new ArrayList<CyNode>();
-		List<CyNode> subnetNodeNeighborsToCheck;
-		double neighborScore;
-		CyNode neighborNode = null;
-		double bestNeighborScore;
-		CyNode bestNeighborNode = null;
-		boolean nodeToAdd;
-		double subnetScore;
-		
-		//•• While all nodes are not yet found
-		while (mUtils.nodeLeft())
-		{
-			//-- Create the subnetwork
-			subnet = rootNet.addSubNetwork();
-			subnetScore = 0;
-
-			//-- Get the best node not yet added to a subnetwork
-			CyNode startNode = mUtils.getBestRemainingNode();
-			
-			//-- Add it to the subnetwork
-			subnet.addNode(startNode);
-			mUtils.setAdded(startNode);
-
-			//•• While it is possible to add a node and increase the subnetwork score
-			nodeToAdd = true;
-			while(nodeToAdd)
-			{
-				//-- Get list of nodes in the subnetwork
-				subnetNodes = subnet.getNodeList();
-
-				neighborNodes.clear();
-				//-- Get neighboring nodes of all nodes in subnet if not already seen
-				for(int i = 0; i < subnetNodes.size(); i++)
-				{
-					subnetNodeNeighborsToCheck = network.getNeighborList(subnetNodes.get(i), CyEdge.Type.ANY);
-					for(int j = 0; j < subnetNodeNeighborsToCheck.size(); j++)
-					{
-						if(!mUtils.isAdded(subnetNodeNeighborsToCheck.get(j)))
-							neighborNodes.add(subnetNodeNeighborsToCheck.get(j));
-					}
-				}
-				
-				//-- Score each
-				bestNeighborScore = -Double.MAX_VALUE;
-				for(int i = 0; i < neighborNodes.size(); i++)
-				{
-					neighborNode = neighborNodes.get(i);
-					neighborScore = scoreNewNode(neighborNode, subnet);    //<--- FINISH THE SCORING METHOD PLEASE
-					if(neighborScore > bestNeighborScore)
-					{
-						bestNeighborScore = neighborScore;
-						bestNeighborNode = neighborNode;
-					}
-				}
-				
-				//-- Add the largest positive score, and finish if all are negative
-				if(bestNeighborScore > 0)
-				{
-					subnet.addNode(bestNeighborNode);
-					subnetScore += bestNeighborScore;
-					for(CyEdge edge: network.getAdjacentEdgeList(bestNeighborNode, CyEdge.Type.ANY))
-					{
-						if(subnet.containsNode(edge.getSource()) && subnet.containsNode(edge.getTarget()))
-							subnet.addEdge(edge);
-					}
-					mUtils.setAdded(bestNeighborNode);
-				}
-				else
-				{
-					nodeToAdd = false;
-				}
-			}
-			
-			
-				
-			//-- Add the subnetwork to subnets
-			subnets.add(new SubnetData(subnet, subnetScore));
-			
-		}
-		subnets.sort(new SubnetDataComparator());
-		return subnets;
-	}*/
+	
 	
 	/**
 	 * Gets the subnetworks of a network
@@ -392,7 +269,7 @@ public class MoBaSMainTask extends AbstractTask {
 		
 		
 		///
-		// Something here
+		// Start
 		///
 		
 		
@@ -472,7 +349,6 @@ public class MoBaSMainTask extends AbstractTask {
 			}
 			
 			
-				
 			//-- Add the subnetwork to subnets
 			subnets.add(new SubnetData(subnet, subnetScore));
 			
@@ -628,13 +504,16 @@ public class MoBaSMainTask extends AbstractTask {
 	private Double scoreNewNode(CyNode newNode, CySubNetwork subnet)
 	{
 		double newNodeIndividualScore = getDoubleScoreValue(newNode, defaultNodeScore);
-				//subnet.getRootNetwork().getRow(newNode).get(nodeScoreAttribute, Double.class);
+
+		
+		
 		double addNodeScore = 0;
 		List<CyNode> subnetNodes = subnet.getNodeList();
 		CyNode subnetNode;
 		double subnetNodeIndividualScore;
-		if(nodeScoreMethod == NodeScoreMethod.P_VALUES)
+		if (nodeScoreMethod == NodeScoreMethod.P_VALUES)
 		{
+			
 			//•• For each node already a part of the subnet
 			for(int i = 0; i < subnetNodes.size(); i++)
 			{
@@ -655,22 +534,22 @@ public class MoBaSMainTask extends AbstractTask {
 					}
 					else if(edgeScoreMethod == EdgeScoreMethod.CORRELATION)
 					{
-						//addNodeScore += corr.correlation(arg0, arg1);
+						// TODO: CORRELATION SCORING
 					}
 				}
-				//-- If there is not a connection penalize
+				
+				//-- Penalize, whether or not there is a connection
+				if (backgroundNodeScoreAttribute.equals("None"))
+					addNodeScore -= connectivity * Math.log(scoresMean) * Math.log(scoresMean);
 				else
-				{
-					if (backgroundNodeScoreAttribute.equals("None"))
-						addNodeScore -= connectivity * Math.log(scoresMean) * Math.log(scoresMean);
-					else
-						addNodeScore -= connectivity * Math.log(getDoubleBackgroundScore(subnetNode, defaultNodeScore)) * Math.log(getDoubleBackgroundScore(newNode, defaultNodeScore));
-				}
+					addNodeScore -= connectivity * Math.log(getDoubleBackgroundScore(subnetNode, defaultNodeScore)) * Math.log(getDoubleBackgroundScore(newNode, defaultNodeScore));
+				
 			}
 			
 		}
 		else if(nodeScoreMethod == NodeScoreMethod.FOLD_CHANGE)
 		{
+			
 			//•• For each node already added to the subnet
 			for(int i = 0; i < subnetNodes.size(); i++)
 			{
@@ -695,14 +574,11 @@ public class MoBaSMainTask extends AbstractTask {
 						// TODO: CORRELATION SCORING
 					}
 				}
-				//-- If there is not a connection penalize
+				//-- Penalize, whether or not there is a connection
+				if (backgroundNodeScoreAttribute.equals("None"))
+					addNodeScore -= connectivity * Math.log(scoresMean) * Math.log(scoresMean);
 				else
-				{
-					if (backgroundNodeScoreAttribute.equals("None"))
-						addNodeScore -= connectivity * Math.log(scoresMean) * Math.log(scoresMean);
-					else
-						addNodeScore -= connectivity * Math.log(getDoubleBackgroundScore(subnetNode, defaultNodeScore)) * Math.log(getDoubleBackgroundScore(newNode, defaultNodeScore));
-				}
+					addNodeScore -= connectivity * Math.log(getDoubleBackgroundScore(subnetNode, defaultNodeScore)) * Math.log(getDoubleBackgroundScore(newNode, defaultNodeScore));
 			}
 		}
 		return addNodeScore;
@@ -721,8 +597,8 @@ public class MoBaSMainTask extends AbstractTask {
 		}
 
 		public int compare(CyRow row1, CyRow row2) {
-			double score1 = row1.get(column, Double.class, defaultNodeScore);
-			double score2 = row2.get(column, Double.class, defaultNodeScore);
+			double score1 = Math.abs(row1.get(column, Double.class, defaultNodeScore));
+			double score2 = Math.abs(row2.get(column, Double.class, defaultNodeScore));
 			if(score1 < score2)
 				return -1;
 			else if(score1 > score2)
@@ -752,7 +628,7 @@ public class MoBaSMainTask extends AbstractTask {
 		if(nodeScoreAttributeType.equals(Integer.class))
 		{
 			try {
-				return networkMain.getRow(node).get(nodeScoreAttribute, Integer.class, defaultValue).doubleValue();
+				return Math.abs(networkMain.getRow(node).get(nodeScoreAttribute, Integer.class, defaultValue).doubleValue());
 			} catch (Exception e) {
 				new Dump("A");
 				throw new RuntimeException(e.getMessage());
@@ -761,7 +637,7 @@ public class MoBaSMainTask extends AbstractTask {
 		else if (nodeScoreAttributeType.equals(Long.class))
 		{
 			try {
-				return networkMain.getRow(node).get(nodeScoreAttribute, Long.class, defaultValue).doubleValue();
+				return Math.abs(networkMain.getRow(node).get(nodeScoreAttribute, Long.class, defaultValue).doubleValue());
 			} catch (Exception e) {
 				new Dump("B");
 				throw new RuntimeException(e.getMessage());
@@ -770,7 +646,7 @@ public class MoBaSMainTask extends AbstractTask {
 		else if (nodeScoreAttributeType.equals(Double.class))
 		{
 			try {
-				return networkMain.getRow(node).get(nodeScoreAttribute, Double.class, defaultValue);
+				return Math.abs(networkMain.getRow(node).get(nodeScoreAttribute, Double.class, defaultValue));
 			} catch (Exception e) {
 				new Dump(e.getMessage());
 				throw new RuntimeException(e.getMessage());
@@ -792,7 +668,7 @@ public class MoBaSMainTask extends AbstractTask {
 		if(backgroundNodeScoreAttributeType.equals(Integer.class))
 		{
 			try {
-				return networkMain.getRow(node).get(backgroundNodeScoreAttribute, Integer.class, defaultValue).doubleValue();
+				return Math.abs(networkMain.getRow(node).get(backgroundNodeScoreAttribute, Integer.class, defaultValue).doubleValue());
 			} catch (Exception e) {
 				throw new RuntimeException(e.getMessage());
 			}
@@ -800,7 +676,7 @@ public class MoBaSMainTask extends AbstractTask {
 		else if (backgroundNodeScoreAttributeType.equals(Long.class))
 		{
 			try {
-				return networkMain.getRow(node).get(backgroundNodeScoreAttribute, Long.class, defaultValue).doubleValue();
+				return Math.abs(networkMain.getRow(node).get(backgroundNodeScoreAttribute, Long.class, defaultValue).doubleValue());
 			} catch (Exception e) {
 				throw new RuntimeException(e.getMessage());
 			}
@@ -808,7 +684,7 @@ public class MoBaSMainTask extends AbstractTask {
 		else if (backgroundNodeScoreAttributeType.equals(Double.class))
 		{
 			try {
-				return networkMain.getRow(node).get(backgroundNodeScoreAttribute, Double.class, defaultValue);
+				return Math.abs(networkMain.getRow(node).get(backgroundNodeScoreAttribute, Double.class, defaultValue));
 			} catch (Exception e) {
 				throw new RuntimeException(e.getMessage());
 			}
@@ -819,36 +695,29 @@ public class MoBaSMainTask extends AbstractTask {
 		}
 	}
 	
-	//private double tryGetDoubleScoreValue
 	
 		
 	/**
-	 * Get the mean of all the scores
+	 * Get the mean of all the scores, ignoring data that is not present
 	 * @return The mean
 	 */
 	private double getScoresMean()
 	{
 		double mean = 0;
+		int count = 0;
 		List<CyNode> nodes = networkMain.getNodeList();
 		for(CyNode node: nodes)
 		{
-			mean += getDoubleScoreValue(node, defaultNodeScore);
+			double scoreValue = getDoubleScoreValue(node, Double.MAX_VALUE);
+			if (scoreValue != Double.MAX_VALUE) {
+				mean += scoreValue;
+				count++;
+			}
 		}
-		mean /= nodes.size();
+		mean /= count;
 		return mean;
 	}
-	
-	/*private double getScoresMeanWithoutNulls()
-	{
-		double mean = 0;
-		List<CyNode> nodes = networkMain.getNodeList();
-		for(CyNode node: nodes)
-		{
-			mean += getDoubleScoreValue(node, );
-		}
 
-	}*/
-	
 	/**
 	 * Class used to compare to SubnetData objects by their score
 	 */

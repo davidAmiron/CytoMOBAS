@@ -24,6 +24,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 
 import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.application.swing.CytoPanelName;
@@ -233,7 +235,7 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 			BufferedReader reader = new BufferedReader(new FileReader(file));
 			while((line = reader.readLine()) != null && count < numToDisplay)
 			{
-				dataset.addValue(Double.parseDouble(line.split("\t")[2]), "Main Subnetwork Score", rank + "");
+				dataset.addValue(Double.parseDouble(line.split("\t")[2]), "Subnetworks in Origional Network", rank + "");
 				rank++;
 				count++;
 			}
@@ -265,7 +267,7 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 				scores.add(new ArrayList<Double>());
 				for(int i = 0; i < numToDisplay; i++)
 				{
-					scores.get(lineCounter).add(Double.parseDouble(allScores[i]));
+					scores.get(lineCounter).add(Double.parseDouble(allScores[i + 1])); // i + 1 to account for "Permuted Network #" before score data
 				}
 				lineCounter++;
 			}
@@ -282,7 +284,7 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 			{
 				subnetRankData.add(scores.get(j).get(i));
 			}
-			dataset.add(BoxAndWhiskerCalculator.calculateBoxAndWhiskerStatistics(subnetRankData), "Permuted Subnetwork Scores", rank + "");
+			dataset.add(BoxAndWhiskerCalculator.calculateBoxAndWhiskerStatistics(subnetRankData), "Subnetworks in Permuted Network", rank + "");
 			rank++;
 		}
 		
@@ -382,7 +384,11 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 			taInfo.setText("Enter a valid project name.");
 		}
 		JTable table = new JTable(data, columnNames);
-		table.sizeColumnsToFit(3);
+		//table.sizeColumnsToFit(3);
+		TableColumn tableColumn = new TableColumn();
+		tableColumn.setWidth(30);
+		table.getTableHeader().setResizingColumn(tableColumn);
+		table.doLayout();
 		this.add(new JScrollPane(table));
 	}
 	
