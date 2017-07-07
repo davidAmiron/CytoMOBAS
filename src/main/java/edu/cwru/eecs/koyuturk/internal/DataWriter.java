@@ -131,8 +131,9 @@ public class DataWriter {
 			file.createNewFile();
 			FileWriter fileWriter = new FileWriter(file);
 			
-			for(ArrayList<Double> networkScores: permutedNetworksScores)
-			{
+			for (int i = 0; i < permutedNetworksScores.size(); i++) {
+				ArrayList<Double> networkScores = permutedNetworksScores.get(i);
+				fileWriter.write("Permuted Network " + i + ": ");
 				for(Double score: networkScores.subList(0, networkScores.size() - 1))
 				{
 					fileWriter.write(score + "\t");
