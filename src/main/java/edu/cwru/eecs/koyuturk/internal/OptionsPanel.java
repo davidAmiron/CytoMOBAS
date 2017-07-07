@@ -329,8 +329,8 @@ public class OptionsPanel extends JFrame implements ActionListener{
 		String absentNodeScoreRaw = btngrpAbsentNodeScore.getSelection().getActionCommand();
 		switch (absentNodeScoreRaw) {
 		case "TREAT_AS_ZERO": absentNodeScoreTreatment = AbsentNodeScoreTreatment.ZERO; break;
-		case "TREAT_AS_ONE": absentNodeScoreTreatment = AbsentNodeScoreTreatment.ONE;
-		case "TREAT_AS_AVERAGE": absentNodeScoreTreatment = AbsentNodeScoreTreatment.AVERAGE;
+		case "TREAT_AS_ONE": absentNodeScoreTreatment = AbsentNodeScoreTreatment.ONE; break;
+		case "TREAT_AS_AVERAGE": absentNodeScoreTreatment = AbsentNodeScoreTreatment.AVERAGE; break;
 		}
 
 		
