@@ -4,7 +4,6 @@ import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics2D;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
@@ -13,8 +12,10 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 
 import javax.imageio.ImageIO;
+import javax.swing.BoxLayout;
 import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -24,11 +25,14 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
 
+import org.cytoscape.application.CyApplicationManager;
 import org.cytoscape.application.swing.CytoPanelComponent;
 import org.cytoscape.application.swing.CytoPanelName;
+import org.cytoscape.model.CyTable;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
@@ -48,9 +52,7 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 	private static final String MOBAS_DIR = System.getProperty("user.home") + "/CytoscapeConfiguration/app-data/MoBaS";
 	
 	private final String TITLE = "MoBaS Results";
-	
-	// Main panel
-	private JPanel pnlResultsActions;
+
 	
 	// Project identifyer
 	private JPanel pnlIdentifyer;
@@ -71,14 +73,16 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 	// Area for notices
 	private JTextArea taInfo;
 	
+	// ScrollPane for the table
+	private JScrollPane scrlTable;
 	
-	public ResultsPanel()
+	// Used to get current network
+	private CyApplicationManager appManager;
+	
+	
+	public ResultsPanel(CyApplicationManager appManager)
 	{
-		setLayout(new FlowLayout());
-		setMinimumSize(new Dimension(400, 500));
-		setSize(new Dimension(400, 500));
-		
-		pnlResultsActions = new JPanel(new GridLayout(6, 1));
+		setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		
 		// Project identifyer
 		pnlIdentifyer = new JPanel(new FlowLayout());
@@ -90,7 +94,7 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 		tfIdentifyer.setColumns(15);
 		pnlIdentifyer.add(tfIdentifyer);
 		
-		pnlResultsActions.add(pnlIdentifyer);
+		add(pnlIdentifyer);
 		
 		// Number of subnets to show
 		pnlSubnetsNum = new JPanel(new FlowLayout());
@@ -102,33 +106,36 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 		tfSubnetsNum.setColumns(5);
 		pnlSubnetsNum.add(tfSubnetsNum);
 		
-		pnlResultsActions.add(pnlSubnetsNum);
+		add(pnlSubnetsNum);
 		
 		// Button to generate chart
 		btnGenerateChart = new JButton("Generate Plot");
 		btnGenerateChart.addActionListener(new GeneratePlotListener());
 		
-		pnlResultsActions.add(btnGenerateChart);
+		add(btnGenerateChart);
 		
 		// Button to save the chart to a file
 		btnSavePlot = new JButton("Save Plot");
 		btnSavePlot.addActionListener(new SavePlotListener());
 		
-		pnlResultsActions.add(btnSavePlot);
+		add(btnSavePlot);
 		
 		// Area for notices
 		taInfo = new JTextArea("");
 		taInfo.setEnabled(false);
 		taInfo.setLineWrap(true);
 		taInfo.setBackground(getBackground());
-		taInfo.setAlignmentY(CENTER_ALIGNMENT);
+		taInfo.setAlignmentY(CENTER_ALIGNMENT);		
 		
-		pnlResultsActions.add(taInfo);
+		add(taInfo);
 		
-		pnlResultsActions.setVisible(true);
-		add(pnlResultsActions);
+		// The ScrollPane table
+		scrlTable = new JScrollPane();
+		add(scrlTable);
+		
+		this.appManager = appManager;
 	}
-
+	
 	public Component getComponent() {
 		return this;
 	}
@@ -144,12 +151,7 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 	public String getTitle() {
 		return this.TITLE;
 	}
-	
-	public void showResultsActions()
-	{
-		pnlResultsActions.setVisible(true);
-	}
-	
+
 	private class GeneratePlotListener implements ActionListener
 	{
 		public void actionPerformed(ActionEvent evt)
@@ -164,9 +166,18 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 			plotWindow.setLocationRelativeTo(null);
 			plotWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 			plotWindow.setVisible(true);
+			plotWindow.toFront();
 			
 			updateSubnetsTable();
 		}
+	}
+	
+	public void setProjectName(String projectName) {
+		this.tfIdentifyer.setText(projectName);
+	}
+	
+	public void generateGraph() {
+		this.btnGenerateChart.doClick();
 	}
 	
 	private class SavePlotListener implements ActionListener
@@ -192,6 +203,20 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 			{
 				taInfo.setText("Invalid project name");
 			}
+		}
+	}
+	
+	private class RowSelectedListener implements ListSelectionListener {
+		
+		private JTable table;
+		
+		public RowSelectedListener(JTable table) {
+			this.table = table;
+		}
+		
+		@Override
+		public void valueChanged(ListSelectionEvent event) {
+			selectNodes(table.getSelectedRow() + 1);
 		}
 	}
 	
@@ -319,14 +344,6 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 		return Integer.parseInt(tfSubnetsNum.getText());
 	}
 	
-	private JScrollPane getTestTable()
-	{
-		String[] columnNames = {"Column 1", "Column 2", "And Column 3"};
-		Object[][] data = {{"hi", "word", 2}, {4, 5, true}};
-		
-		JTable table = new JTable(data, columnNames);
-		return new JScrollPane(table);
-	}
 	
 	private void updateSubnetsTable()
 	{
@@ -372,6 +389,18 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 				}
 				reader.close();
 				
+				JTable table = new JTable(data, columnNames);
+				//table.sizeColumnsToFit(3);
+				TableColumn tableColumn = new TableColumn();
+				tableColumn.setWidth(30);
+				table.getTableHeader().setResizingColumn(tableColumn);
+				table.doLayout();
+				table.getSelectionModel().addListSelectionListener(new RowSelectedListener(table));
+				
+				//resetPanelViewWithTable(table);
+				scrlTable.getViewport().setView(table);
+				taInfo.setText("");
+				
 			} catch (IOException e) {
 				
 				// Return null if read fails
@@ -383,13 +412,35 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 			// The file does not exist
 			taInfo.setText("Enter a valid project name.");
 		}
-		JTable table = new JTable(data, columnNames);
-		//table.sizeColumnsToFit(3);
-		TableColumn tableColumn = new TableColumn();
-		tableColumn.setWidth(30);
-		table.getTableHeader().setResizingColumn(tableColumn);
-		table.doLayout();
-		this.add(new JScrollPane(table));
+		
+	}
+	
+	private void selectNodes(int rank) {
+
+		// Read subnet file for that rank
+		String subnetFile = MOBAS_DIR + "/" + getProjectName() + "/subnets/subnet_" + rank + ".txt";
+		
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(subnetFile));
+			HashSet<String> nodeNames = new HashSet<String>();
+			
+			String line;
+			while((line = reader.readLine()) != null) {
+				String[] split = line.split("\t");
+				nodeNames.add(split[0]);
+				nodeNames.add(split[0]);
+			}
+			
+			CyTable nodeTable = appManager.getCurrentNetwork().getDefaultNodeTable();
+			for (String node: nodeNames)
+				nodeTable.getMatchingRows("name", node).iterator().next().set("selected", true);
+			
+			reader.close();
+		} catch (IOException e) {
+			new Dump("Error: cannot read file.\n" + subnetFile);
+		}
+		
+		
 	}
 	
 }

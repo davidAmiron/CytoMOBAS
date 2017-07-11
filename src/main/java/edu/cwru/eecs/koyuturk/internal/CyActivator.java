@@ -35,7 +35,7 @@ public class CyActivator extends AbstractCyActivator {
 		props.setProperty("title", "MoBaS");
 		props.setProperty("preferredMenu", "Apps");
 		
-		ResultsPanel resultsPanel = new ResultsPanel();
+		ResultsPanel resultsPanel = new ResultsPanel(appManager);
 		
 		MoBaSUtilities utils = new MoBaSUtilities(appManager, resultsPanel, networkManager, networkFactory, rootNetworkManager, taskManager, cloneNetworkTaskFactory);
 		

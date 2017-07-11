@@ -158,6 +158,10 @@ public class MoBaSMainTask extends AbstractTask {
 		//utils.getResultsPanel().showResultsActions();
 		tm.setStatusMessage("Writing permutation scores");
 		dataWriter.writePermutedScores(permutedNetworksScores);
+		
+		//-- Set project name in results panel
+		utils.getResultsPanel().setProjectName(projectName);
+		utils.getResultsPanel().generateGraph();
 	}
 	
 	/**
