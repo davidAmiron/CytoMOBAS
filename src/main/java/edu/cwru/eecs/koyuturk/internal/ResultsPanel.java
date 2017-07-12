@@ -52,6 +52,8 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 	private static final String MOBAS_DIR = System.getProperty("user.home") + "/CytoscapeConfiguration/app-data/MoBaS";
 	
 	private final String TITLE = "MoBaS Results";
+	
+	public static int TABLE_ROWS_NUM = 100;
 
 	
 	// Project identifyer
@@ -132,7 +134,7 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 		// The ScrollPane table
 		scrlTable = new JScrollPane();
 		add(scrlTable);
-		
+				
 		this.appManager = appManager;
 	}
 	
@@ -350,18 +352,17 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 		// The column names for the output table
 		String[] columnNames = {"Rank", "Size", "Score", "Q Value"};
 		
-		
-		// Only showing the top 50 subnets
-		int numToDisplay = 50;
-		
 		// The data to pass into the table
-		Object[][] data = new Object[numToDisplay][4];
+		Object[][] data = new Object[TABLE_ROWS_NUM][4];
 		
 		String projectName = getProjectName();
 		String mainSubnetScoresFile = MOBAS_DIR + "/" + projectName + "/score-data/mainScores.txt";
 		File file = new File(mainSubnetScoresFile);
 		String line;
 		int count = 0;
+		
+		// Get all Q Scores
+		ArrayList<ArrayList<Double>> permutationData = readPermutationData();
 		
 		int rank;
 		int size;
@@ -372,13 +373,13 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 			try
 			{
 				BufferedReader reader = new BufferedReader(new FileReader(file));
-				while((line = reader.readLine()) != null && count < numToDisplay)
+				while((line = reader.readLine()) != null && count < TABLE_ROWS_NUM)
 				{
 					// For each subnetwork
 					rank = count + 1;
 					size = Integer.parseInt(line.split("\t")[1]);
 					score = Double.parseDouble(line.split("\t")[2]);
-					qValue = 37;
+					qValue = getQScore(score, rank, permutationData);
 					
 					data[count][0] = rank;
 					data[count][1] = size;
@@ -440,7 +441,61 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 			new Dump("Error: cannot read file.\n" + subnetFile);
 		}
 		
+	}
+	
+	private ArrayList<ArrayList<Double>> readPermutationData() {
+
+		String permutationScoresFile = MOBAS_DIR + "/" + getProjectName() + "/score-data/permutationScores.txt";
+		ArrayList<ArrayList<Double>> permutationData = new ArrayList<ArrayList<Double>>();
 		
+		try {
+
+			BufferedReader reader = new BufferedReader(new FileReader(permutationScoresFile));
+			
+			for (int i = 0; i < TABLE_ROWS_NUM; i++)
+				permutationData.add(new ArrayList<Double>());
+			
+			// Add in the data
+			String line;
+			String[] split;
+			int readNum;
+			int missing;
+			while ((line = reader.readLine()) != null) {
+				split = line.split("\t");
+				if (split.length - 1 < TABLE_ROWS_NUM) {
+					readNum = split.length - 1;
+					missing = TABLE_ROWS_NUM - readNum;
+				} else {
+					readNum = TABLE_ROWS_NUM;
+					missing = 0;
+				}
+				for (int i = 1; i < readNum + 1; i++) {
+					permutationData.get(i - 1).add(Double.parseDouble(split[i]));
+					for (int j = 0; j < missing; j++)
+						permutationData.get(i - 1).add(null);
+				}
+			}
+			
+			return permutationData;
+			
+		} catch (IOException e) {
+			new Dump("Unable to read file.\n" + permutationScoresFile);
+			return null;
+		}
+		
+	}
+	
+	private double getQScore(double score, int rank, ArrayList<ArrayList<Double>> permutationData) {
+		
+		int numOfScoresAbove = 0;
+		for (int i = 0; i < rank; i++) {
+			for (Double permutationScore: permutationData.get(i))
+				if (permutationScore == null)
+					continue;
+				else if (permutationScore > score)
+					numOfScoresAbove++;
+		}
+		return (double)numOfScoresAbove / (rank * permutationData.size());
 	}
 	
 }

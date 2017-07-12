@@ -9,7 +9,7 @@ import javax.swing.JPanel;
 
 
 /**
- * Class to print an object to a window, used for debugging
+ * Class to print an object to a window, used displaying simple messages.
  * @author davidmiron
  *
  */
@@ -22,7 +22,7 @@ public class Dump extends JFrame {
 		dumpNum++;
 		setLayout(new FlowLayout());
 		
-		setTitle(obj.toString());
+		add(new JLabel(obj.toString()));
 		setMinimumSize(new Dimension(400, 200));
 		pack();
 		setLocationRelativeTo(null);
@@ -43,9 +43,6 @@ public class Dump extends JFrame {
 		setVisible(true);
 	}
 	
-	public void setText(Object obj)
-	{
-		setTitle(obj.toString());
-	}
+	
 	
 }
