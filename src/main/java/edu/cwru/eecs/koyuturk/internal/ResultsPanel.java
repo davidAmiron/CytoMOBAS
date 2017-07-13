@@ -492,7 +492,7 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 			for (Double permutationScore: permutationData.get(i))
 				if (permutationScore == null)
 					continue;
-				else if (permutationScore > score)
+				else if (permutationScore >= score)
 					numOfScoresAbove++;
 		}
 		return (double)numOfScoresAbove / (rank * permutationData.size());
