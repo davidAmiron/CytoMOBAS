@@ -534,7 +534,7 @@ public class MoBaSMainTask extends AbstractTask {
 					}
 					else if(edgeScoreMethod == EdgeScoreMethod.MINIMUM)
 					{
-						addNodeScore += Math.log(Math.min(newNodeIndividualScore, subnetNodeIndividualScore));
+						addNodeScore += -Math.log(Math.max(newNodeIndividualScore, subnetNodeIndividualScore));
 					}
 					else if(edgeScoreMethod == EdgeScoreMethod.CORRELATION)
 					{

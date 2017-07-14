@@ -429,7 +429,7 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 			while((line = reader.readLine()) != null) {
 				String[] split = line.split("\t");
 				nodeNames.add(split[0]);
-				nodeNames.add(split[0]);
+				nodeNames.add(split[1]);
 			}
 			
 			CyTable nodeTable = appManager.getCurrentNetwork().getDefaultNodeTable();
