@@ -361,7 +361,7 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 		String line;
 		int count = 0;
 		
-		// Get all Q Scores
+		// Get all permutation data
 		ArrayList<ArrayList<Double>> permutationData = readPermutationData();
 		
 		int rank;

@@ -94,9 +94,9 @@ public class MoBaSMainTask extends AbstractTask {
 		if (absentNodeScoreTreatment == AbsentNodeScoreTreatment.IGNORE)
 			if (nodeScoreMethod == NodeScoreMethod.P_VALUES)
 				defaultNodeScore = 1; // Set to 1 so that if non-existent data, log(1) = 0 so it is ignored
-			else
+			else if (nodeScoreMethod == NodeScoreMethod.FOLD_CHANGE)
 				defaultNodeScore = 0; // Set to 0 so that if non-existent data, multiplying by 0 ignores the node
-		else
+		else if (absentNodeScoreTreatment == AbsentNodeScoreTreatment.AVERAGE)
 			defaultNodeScore = scoresMean;
 			
 	}
@@ -534,7 +534,7 @@ public class MoBaSMainTask extends AbstractTask {
 					}
 					else if(edgeScoreMethod == EdgeScoreMethod.MINIMUM)
 					{
-						addNodeScore += -Math.log(Math.max(newNodeIndividualScore, subnetNodeIndividualScore));
+						addNodeScore += Math.abs(Math.log(Math.max(newNodeIndividualScore, subnetNodeIndividualScore))); // Uses max because the highest p-value results in the lowest score
 					}
 					else if(edgeScoreMethod == EdgeScoreMethod.CORRELATION)
 					{
@@ -544,9 +544,21 @@ public class MoBaSMainTask extends AbstractTask {
 				
 				//-- Penalize, whether or not there is a connection
 				if (backgroundNodeScoreAttribute.equals("None"))
-					addNodeScore -= connectivity * Math.log(scoresMean) * Math.log(scoresMean);
+				{
+					if(edgeScoreMethod == EdgeScoreMethod.MULTIPLICATION)
+						addNodeScore -= connectivity * Math.log(scoresMean) * Math.log(scoresMean);
+					else if(edgeScoreMethod == EdgeScoreMethod.MINIMUM)
+						addNodeScore -= connectivity * Math.abs(Math.log(scoresMean));
+				}
 				else
-					addNodeScore -= connectivity * Math.log(getDoubleBackgroundScore(subnetNode, defaultNodeScore)) * Math.log(getDoubleBackgroundScore(newNode, defaultNodeScore));
+				{
+					if(edgeScoreMethod == EdgeScoreMethod.MULTIPLICATION)
+						addNodeScore -= connectivity * Math.abs(Math.log(getDoubleBackgroundScore(subnetNode, defaultNodeScore)) *
+													   			Math.log(getDoubleBackgroundScore(newNode, defaultNodeScore)));
+					else if(edgeScoreMethod == EdgeScoreMethod.MINIMUM)
+						addNodeScore -= connectivity * Math.abs(Math.log(Math.max(getDoubleBackgroundScore(subnetNode, defaultNodeScore),
+																		 		  getDoubleBackgroundScore(newNode, defaultNodeScore))));
+				}
 				
 			}
 			
@@ -562,12 +574,13 @@ public class MoBaSMainTask extends AbstractTask {
 						//subnet.getRow(subnetNode).get(nodeScoreAttribute, Double.class);
 				
 				//-- If there is a connection
-				if(subnet.containsEdge(subnetNode, newNode) || subnet.containsEdge(newNode, subnetNode))
+				if(subnet.getRootNetwork().containsEdge(subnetNode, newNode) || subnet.getRootNetwork().containsEdge(newNode, subnetNode))
 				{
 					
 					if(edgeScoreMethod == EdgeScoreMethod.MULTIPLICATION)
 					{
 						addNodeScore += newNodeIndividualScore * subnetNodeIndividualScore;
+						//new Dump("Here: " + addNodeScore);
 					}
 					else if(edgeScoreMethod == EdgeScoreMethod.MINIMUM)
 					{
@@ -577,12 +590,25 @@ public class MoBaSMainTask extends AbstractTask {
 					{
 						// TODO: CORRELATION SCORING
 					}
-				}
+				}//new Dump("Old: " + subnetNodeIndividualScore + "\nNew: " + newNodeIndividualScore +
+					//		"\naddnodescore: " + addNodeScore + "\nMult: " + (newNodeIndividualScore * subnetNodeIndividualScore));
 				//-- Penalize, whether or not there is a connection
 				if (backgroundNodeScoreAttribute.equals("None"))
-					addNodeScore -= connectivity * Math.log(scoresMean) * Math.log(scoresMean);
+				{
+					if(edgeScoreMethod == EdgeScoreMethod.MULTIPLICATION)
+						addNodeScore -= connectivity * scoresMean * scoresMean;
+					else if(edgeScoreMethod == EdgeScoreMethod.MINIMUM)
+						addNodeScore -= connectivity * scoresMean;
+				}
 				else
-					addNodeScore -= connectivity * Math.log(getDoubleBackgroundScore(subnetNode, defaultNodeScore)) * Math.log(getDoubleBackgroundScore(newNode, defaultNodeScore));
+				{
+					if(edgeScoreMethod == EdgeScoreMethod.MULTIPLICATION)
+						addNodeScore -= connectivity * getDoubleBackgroundScore(subnetNode, defaultNodeScore) *
+													   getDoubleBackgroundScore(newNode, defaultNodeScore);
+					else if(edgeScoreMethod == EdgeScoreMethod.MINIMUM)
+						addNodeScore -= connectivity * Math.min(getDoubleBackgroundScore(subnetNode, defaultNodeScore),
+																getDoubleBackgroundScore(newNode, defaultNodeScore));
+				}
 			}
 		}
 		return addNodeScore;
