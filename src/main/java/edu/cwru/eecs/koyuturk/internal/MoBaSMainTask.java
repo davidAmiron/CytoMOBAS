@@ -89,6 +89,16 @@ public class MoBaSMainTask extends AbstractTask {
 			this.backgroundNodeScoreAttributeType = networkMain.getDefaultNodeTable().getColumn(backgroundNodeScoreAttribute).getType();
 		this.absentNodeScoreTreatment = absentNodeScoreTreatment;
 		
+		
+			
+	}
+	
+	/**
+	 * Main method
+	 */
+	public void run(TaskMonitor tm)
+	{
+		// Extra setup
 		scoresMean = getScoresMean();
 		
 		if (absentNodeScoreTreatment == AbsentNodeScoreTreatment.IGNORE)
@@ -98,14 +108,7 @@ public class MoBaSMainTask extends AbstractTask {
 				defaultNodeScore = 0; // Set to 0 so that if non-existent data, multiplying by 0 ignores the node
 		else if (absentNodeScoreTreatment == AbsentNodeScoreTreatment.AVERAGE)
 			defaultNodeScore = scoresMean;
-			
-	}
-	
-	/**
-	 * Main method
-	 */
-	public void run(TaskMonitor tm)
-	{
+		
 		tm.setTitle("MoBaS");
 		tm.setProgress(-1);
 		dataWriter = new DataWriter(projectName);
@@ -631,8 +634,7 @@ public class MoBaSMainTask extends AbstractTask {
 		public int compare(CyRow row1, CyRow row2) {
 			double score1 = 0;
 			double score2 = 0;
-			//Class theClass = row1.get(column, type, defaultNodeScore).getClass();
-			//new Dump(theClass.getName());
+			
 			if (type.equals(Integer.class)) {
 				//new Dump("a");
 				score1 = Math.abs((Integer) row1.get(column, type, (int)defaultNodeScore));
@@ -711,7 +713,7 @@ public class MoBaSMainTask extends AbstractTask {
 		}
 		else
 		{
-			throw new RuntimeException("Invalid node score attribute type");
+			throw new RuntimeException("Invalid node score attribute type: " + nodeScoreAttributeType);
 		}
 	}
 	
