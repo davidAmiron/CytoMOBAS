@@ -134,6 +134,8 @@ public class ResultsPanel extends JPanel implements CytoPanelComponent{
 		// The ScrollPane table
 		scrlTable = new JScrollPane();
 		add(scrlTable);
+		
+		this.setMinimumSize(new Dimension(600, 300));
 				
 		this.appManager = appManager;
 	}

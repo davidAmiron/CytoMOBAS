@@ -216,7 +216,7 @@ public class OptionsPanel extends JFrame implements ActionListener{
 		
 		tfPermutations = new JTextField();
 		tfPermutations.setColumns(10);
-		tfPermutations.setText("100");
+		tfPermutations.setText("10");
 		pnlPermutations.add(tfPermutations);
 		
 		lblPermutations.setLabelFor(tfPermutations);

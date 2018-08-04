@@ -165,6 +165,10 @@ public class MoBaSMainTask extends AbstractTask {
 		//-- Set project name in results panel
 		utils.getResultsPanel().setProjectName(projectName);
 		utils.getResultsPanel().generateGraph();
+		
+		new Dump("<html>Your subnetworks and score data have been saved in<br />\t" + DataWriter.MOBAS_DIR + "/" + this.projectName + ".<br />" +
+				 "To see scored results, open the Results Panel and select MoBaS Results.<br /> " +
+				 "Once in the results panel, you may select a line to select the nodes of that subnetwork.</html>");
 	}
 	
 	/**

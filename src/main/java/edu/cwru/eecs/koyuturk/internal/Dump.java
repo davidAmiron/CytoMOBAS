@@ -23,7 +23,7 @@ public class Dump extends JFrame {
 		setLayout(new FlowLayout());
 		
 		add(new JLabel(obj.toString()));
-		setMinimumSize(new Dimension(400, 200));
+		setMinimumSize(new Dimension(500, 300));
 		pack();
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);

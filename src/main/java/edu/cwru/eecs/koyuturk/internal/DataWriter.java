@@ -20,7 +20,7 @@ public class DataWriter {
 	private String scoresDir;
 	
 	// Main MoBaS directory
-	private static final String MOBAS_DIR = System.getProperty("user.home") + "/CytoscapeConfiguration/app-data/MoBaS";
+	public static final String MOBAS_DIR = System.getProperty("user.home") + "/CytoscapeConfiguration/app-data/MoBaS";
 	
 	public DataWriter(String projectName)
 	{
