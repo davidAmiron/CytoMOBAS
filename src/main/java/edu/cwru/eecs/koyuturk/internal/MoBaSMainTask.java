@@ -257,7 +257,7 @@ public class MoBaSMainTask extends AbstractTask {
 		List<CyRow> nodeRows = nodeTable.getAllRows();
 		
 		//-- Sort nodeRows, first is the best (p-values want to be small, fold change large)
-		NodeRowsComparatorByDoubleColumn comparer = new NodeRowsComparatorByDoubleColumn(nodeScoreAttribute);
+		NodeRowsComparatorByColumn comparer = new NodeRowsComparatorByColumn(nodeScoreAttribute, nodeScoreAttributeType);
 		if(nodeScoreMethod == NodeScoreMethod.FOLD_CHANGE)
 		{
 			Collections.sort(nodeRows, comparer);
@@ -390,7 +390,7 @@ public class MoBaSMainTask extends AbstractTask {
 		
 		
 		//-- Sort nodeRows, first is the best (p-values want to be small, fold change large)
-		NodeRowsComparatorByDoubleColumn comparer = new NodeRowsComparatorByDoubleColumn(nodeScoreAttribute);
+		NodeRowsComparatorByColumn comparer = new NodeRowsComparatorByColumn(nodeScoreAttribute, nodeScoreAttributeType);
 		if(nodeScoreMethod == NodeScoreMethod.FOLD_CHANGE)
 		{
 			Collections.sort(nodeRows, comparer);
@@ -617,19 +617,46 @@ public class MoBaSMainTask extends AbstractTask {
 	/**
 	 * Class used to organize rows
 	 */
-	private class NodeRowsComparatorByDoubleColumn implements Comparator<CyRow>
+	private class NodeRowsComparatorByColumn implements Comparator<CyRow>
 	{
 		private String column;
+		final Class type;
 		
-		public NodeRowsComparatorByDoubleColumn(String column)
+		public NodeRowsComparatorByColumn(String column, Class type)
 		{
 			this.column = column;
+			this.type = type;
 		}
 
 		public int compare(CyRow row1, CyRow row2) {
-			double score1 = Math.abs(row1.get(column, Double.class, defaultNodeScore));
-			double score2 = Math.abs(row2.get(column, Double.class, defaultNodeScore));
-			if(score1 < score2)
+			double score1 = 0;
+			double score2 = 0;
+			//Class theClass = row1.get(column, type, defaultNodeScore).getClass();
+			//new Dump(theClass.getName());
+			if (type.equals(Integer.class)) {
+				//new Dump("a");
+				score1 = Math.abs((Integer) row1.get(column, type, (int)defaultNodeScore));
+				score2 = Math.abs((Integer) row2.get(column, type, (int)defaultNodeScore));
+			}
+			else if (type.equals(Long.class)) {
+				//new Dump("b");
+				score1 = Math.abs((Long) row1.get(column, type, (long)defaultNodeScore));
+				score2 = Math.abs((Long) row2.get(column, type, (long)defaultNodeScore));
+			}
+			else if (type.equals(Float.class)) {
+				//new Dump("c");
+				score1 = Math.abs((Float) row1.get(column, type, (float)defaultNodeScore));
+				score2 = Math.abs((Float) row2.get(column, type, (float)defaultNodeScore));
+			}
+			else if (type.equals(Double.class)) {
+				//new Dump("d");
+				score1 = Math.abs((Double) row1.get(column, type, (double)defaultNodeScore));
+				score2 = Math.abs((Double) row2.get(column, type, (double)defaultNodeScore));
+			}
+			else {
+				throw new RuntimeException("Invalid node score attribute datatype: " + type.getName());
+			}
+			if (score1 < score2)
 				return -1;
 			else if(score1 > score2)
 				return 1;
