@@ -97,12 +97,20 @@ public class OptionsPanel extends JFrame implements ActionListener{
 		this.utils = utils;
 		
 		
-		// Get attribute columns
+		// Get node attribute columns
 		Object[] attributesRaw = utils.getApplicationManager().getCurrentNetwork().getDefaultNodeTable().getColumns().toArray();
 		String[] attributes = new String[attributesRaw.length];
 		for(int i = 0; i < attributes.length; i++)
 		{
 			attributes[i] = ((CyColumn)attributesRaw[i]).getName();
+		}
+		
+		// Get edge attribute columns
+		Object[] edgeAttributesRaw = utils.getApplicationManager().getCurrentNetwork().getDefaultEdgeTable().getColumns().toArray();
+		String[] edgeAttributes = new String[edgeAttributesRaw.length];
+		for(int i = 0; i < edgeAttributes.length; i++)
+		{
+			edgeAttributes[i] = ((CyColumn)edgeAttributesRaw[i]).getName();
 		}
 		
 		// Project identifier
@@ -152,10 +160,10 @@ public class OptionsPanel extends JFrame implements ActionListener{
 		btngrpEdgeScore.add(rdbtnMinimum);
 		pnlEdgeScore.add(rdbtnMinimum);
 		
-		rdbtnCorrelation = new JRadioButton("Correlation (for time series)");
+		rdbtnCorrelation = new JRadioButton("Correlation");
 		rdbtnCorrelation.setActionCommand("CORRELATION");
-		//btngrpEdgeScore.add(rdbtnCorrelation);   //////////// Uncomment these two lines to bring back
-		//pnlEdgeScore.add(rdbtnCorrelation);      //////////// the correlation option.
+		btngrpEdgeScore.add(rdbtnCorrelation);   //////////// Uncomment these two lines to bring back
+		pnlEdgeScore.add(rdbtnCorrelation);      //////////// the correlation option.
 		
 		
 		// Connectivity
@@ -254,7 +262,11 @@ public class OptionsPanel extends JFrame implements ActionListener{
 		
 		
 		// Add panels
-		setLayout(new GridLayout(10, 1));
+		setLayout(new GridLayout(6, 1));
+		
+		JPanel nodeScoreOptions = new JPanel();
+		JPanel edgeScoreOptions = new JPanel();
+		
 		add(pnlProjectName);
 		add(pnlNodeScore);
 		add(pnlEdgeScore);
