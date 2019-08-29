@@ -51,6 +51,7 @@ public class MoBaSMainTask extends AbstractTask {
 	
 	// Other info
 	private double scoresMean;
+	private double correlationMean;
 	private Class nodeScoreAttributeType;
 	private Class edgeScoreAttributeType;
 	private Class backgroundNodeScoreAttributeType;
@@ -105,6 +106,8 @@ public class MoBaSMainTask extends AbstractTask {
 	{
 		// Extra setup
 		scoresMean = getScoresMean();
+		if (edgeScoreMethod == EdgeScoreMethod.CORRELATION)
+			correlationMean = getCorrelationMean();
 		
 		if (absentNodeScoreTreatment == AbsentNodeScoreTreatment.IGNORE)
 			if (nodeScoreMethod == NodeScoreMethod.P_VALUES)
@@ -562,7 +565,7 @@ public class MoBaSMainTask extends AbstractTask {
 					else if(edgeScoreMethod == EdgeScoreMethod.MINIMUM)
 						addNodeScore -= connectivity * Math.abs(Math.log(scoresMean));
 					else if(edgeScoreMethod == EdgeScoreMethod.CORRELATION)
-						// ?
+						addNodeScore -= connectivity * correlationMean;
 				}
 				else
 				{
@@ -572,6 +575,8 @@ public class MoBaSMainTask extends AbstractTask {
 					else if(edgeScoreMethod == EdgeScoreMethod.MINIMUM)
 						addNodeScore -= connectivity * Math.abs(Math.log(Math.max(getDoubleBackgroundScore(subnetNode, defaultNodeScore),
 																		 		  getDoubleBackgroundScore(newNode, defaultNodeScore))));
+					else if(edgeScoreMethod == EdgeScoreMethod.CORRELATION)
+						addNodeScore -= connectivity * correlationMean;
 				}
 				
 			}
@@ -602,10 +607,10 @@ public class MoBaSMainTask extends AbstractTask {
 					}
 					else if(edgeScoreMethod == EdgeScoreMethod.CORRELATION)
 					{
-						// TODO: CORRELATION SCORING
+						addNodeScore += getCorr(newNode, subnetNode);
 					}
-				}//new Dump("Old: " + subnetNodeIndividualScore + "\nNew: " + newNodeIndividualScore +
-					//		"\naddnodescore: " + addNodeScore + "\nMult: " + (newNodeIndividualScore * subnetNodeIndividualScore));
+				}
+				
 				//-- Penalize, whether or not there is a connection
 				if (backgroundNodeScoreAttribute.equals("None"))
 				{
@@ -613,6 +618,8 @@ public class MoBaSMainTask extends AbstractTask {
 						addNodeScore -= connectivity * scoresMean * scoresMean;
 					else if(edgeScoreMethod == EdgeScoreMethod.MINIMUM)
 						addNodeScore -= connectivity * scoresMean;
+					else if(edgeScoreMethod == EdgeScoreMethod.CORRELATION)
+						addNodeScore -= connectivity * correlationMean;
 				}
 				else
 				{
@@ -622,6 +629,8 @@ public class MoBaSMainTask extends AbstractTask {
 					else if(edgeScoreMethod == EdgeScoreMethod.MINIMUM)
 						addNodeScore -= connectivity * Math.min(getDoubleBackgroundScore(subnetNode, defaultNodeScore),
 																getDoubleBackgroundScore(newNode, defaultNodeScore));
+					else if(edgeScoreMethod == EdgeScoreMethod.CORRELATION)
+						addNodeScore -= connectivity * correlationMean;
 				}
 			}
 		}
@@ -630,12 +639,16 @@ public class MoBaSMainTask extends AbstractTask {
 	
 	private double getCorr(CyNode node1, CyNode node2)
 	{
-		CyEdge edge = networkMain.getConnectingEdgeList(node1, node2, CyEdge.Type.ANY).get(0);
+		return getCorr(networkMain.getConnectingEdgeList(node1, node2, CyEdge.Type.ANY).get(0));
 		
+	}
+	
+	private double getCorr(CyEdge edge)
+	{
 		if(edgeScoreAttributeType.equals(Integer.class))
 		{
 			try {
-				return Math.abs(networkMain.getDefaultEdgeTable().getRow(edge).get(edgeScoreAttribute, Integer.class, 0).doubleValue());
+				return Math.abs(networkMain.getRow(edge).get(edgeScoreAttribute, Integer.class, 0).doubleValue());
 			} catch (Exception e) {
 				throw new RuntimeException(e.getMessage());
 			}
@@ -643,7 +656,7 @@ public class MoBaSMainTask extends AbstractTask {
 		else if (edgeScoreAttributeType.equals(Long.class))
 		{
 			try {
-				return Math.abs(networkMain.getDefaultEdgeTable().getRow(edge).get(edgeScoreAttribute, Long.class, 0).doubleValue());
+				return Math.abs(networkMain.getRow(edge).get(edgeScoreAttribute, Long.class, 0).doubleValue());
 			} catch (Exception e) {
 				throw new RuntimeException(e.getMessage());
 			}
@@ -651,7 +664,7 @@ public class MoBaSMainTask extends AbstractTask {
 		else if (edgeScoreAttributeType.equals(Double.class))
 		{
 			try {
-				return Math.abs(networkMain.getDefaultEdgeTable().getRow(edge).get(edgeScoreAttribute, Double.class, 0.0));
+				return Math.abs(networkMain.getRow(edge).get(edgeScoreAttribute, Double.class, 0.0));
 			} catch (Exception e) {
 				throw new RuntimeException(e.getMessage());
 			}
@@ -681,22 +694,18 @@ public class MoBaSMainTask extends AbstractTask {
 			double score2 = 0;
 			
 			if (type.equals(Integer.class)) {
-				//new Dump("a");
 				score1 = Math.abs((Integer) row1.get(column, type, (int)defaultNodeScore));
 				score2 = Math.abs((Integer) row2.get(column, type, (int)defaultNodeScore));
 			}
 			else if (type.equals(Long.class)) {
-				//new Dump("b");
 				score1 = Math.abs((Long) row1.get(column, type, (long)defaultNodeScore));
 				score2 = Math.abs((Long) row2.get(column, type, (long)defaultNodeScore));
 			}
 			else if (type.equals(Float.class)) {
-				//new Dump("c");
 				score1 = Math.abs((Float) row1.get(column, type, (float)defaultNodeScore));
 				score2 = Math.abs((Float) row2.get(column, type, (float)defaultNodeScore));
 			}
 			else if (type.equals(Double.class)) {
-				//new Dump("d");
 				score1 = Math.abs((Double) row1.get(column, type, (double)defaultNodeScore));
 				score2 = Math.abs((Double) row2.get(column, type, (double)defaultNodeScore));
 			}
@@ -814,6 +823,20 @@ public class MoBaSMainTask extends AbstractTask {
 				mean += scoreValue;
 				count++;
 			}
+		}
+		mean /= count;
+		return mean;
+	}
+	
+	private double getCorrelationMean()
+	{
+		double mean = 0;
+		int count = 0;
+		List<CyEdge> edges = networkMain.getEdgeList();
+		for(CyEdge edge: edges)
+		{
+			mean += getCorr(edge);
+			count++;
 		}
 		mean /= count;
 		return mean;
