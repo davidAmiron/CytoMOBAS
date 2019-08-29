@@ -561,6 +561,8 @@ public class MoBaSMainTask extends AbstractTask {
 						addNodeScore -= connectivity * Math.log(scoresMean) * Math.log(scoresMean);
 					else if(edgeScoreMethod == EdgeScoreMethod.MINIMUM)
 						addNodeScore -= connectivity * Math.abs(Math.log(scoresMean));
+					else if(edgeScoreMethod == EdgeScoreMethod.CORRELATION)
+						// ?
 				}
 				else
 				{
