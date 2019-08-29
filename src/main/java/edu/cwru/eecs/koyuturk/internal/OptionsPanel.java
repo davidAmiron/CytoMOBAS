@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -56,6 +57,11 @@ public class OptionsPanel extends JFrame implements ActionListener{
 	private JRadioButton rdbtnMultiplication;
 	private JRadioButton rdbtnMinimum;
 	private JRadioButton rdbtnCorrelation;
+	
+	// Edge score attribute
+	private JPanel pnlEdgeScoreAttribute;
+	private JLabel lblEdgeScoreAttribute;
+	private JComboBox<String> cbbEdgeScoreAttribute;
 	
 	// Connectivity
 	private JPanel pnlConnectivity;
@@ -201,6 +207,16 @@ public class OptionsPanel extends JFrame implements ActionListener{
 		pnlNodeScoreAttribute.add(cbbNodeScoreAttribute);
 		
 		
+		// Edge score attribute name
+		pnlEdgeScoreAttribute = new JPanel(new FlowLayout());
+		
+		lblEdgeScoreAttribute = new JLabel("Edge Score Attribute:");
+		pnlEdgeScoreAttribute.add(lblEdgeScoreAttribute);
+		
+		cbbEdgeScoreAttribute = new JComboBox<String>(edgeAttributes);
+		pnlEdgeScoreAttribute.add(cbbEdgeScoreAttribute);
+		
+		
 		// Background node score attribute name
 		pnlBackgroundNodeScoreAttribute = new JPanel(new FlowLayout());
 		
@@ -262,17 +278,26 @@ public class OptionsPanel extends JFrame implements ActionListener{
 		
 		
 		// Add panels
-		setLayout(new GridLayout(6, 1));
+		getContentPane().setLayout(new BoxLayout(getContentPane(), BoxLayout.Y_AXIS));
+		
+		JPanel extraOptions = new JPanel(new GridLayout(1, 2, 5, 1));
 		
 		JPanel nodeScoreOptions = new JPanel();
+		nodeScoreOptions.setLayout(new BoxLayout(nodeScoreOptions, BoxLayout.Y_AXIS));
+		nodeScoreOptions.add(pnlNodeScore);
+		nodeScoreOptions.add(pnlNodeScoreAttribute);
+		nodeScoreOptions.add(pnlBackgroundNodeScoreAttribute);
+		
 		JPanel edgeScoreOptions = new JPanel();
+		edgeScoreOptions.add(pnlEdgeScoreAttribute);
+		
+		extraOptions.add(nodeScoreOptions);
+		extraOptions.add(edgeScoreOptions);
 		
 		add(pnlProjectName);
-		add(pnlNodeScore);
 		add(pnlEdgeScore);
+		add(extraOptions);
 		add(pnlConnectivity);
-		add(pnlNodeScoreAttribute);
-		add(pnlBackgroundNodeScoreAttribute);
 		add(pnlPermutations);
 		add(pnlAbsentNodeScore);
 		add(btnSubmit);
@@ -296,6 +321,7 @@ public class OptionsPanel extends JFrame implements ActionListener{
 		int permutations = -1;
 		double connectivity = 0.5;
 		String nodeScoreAttribute = "";
+		String edgeScoreAttribute = "";
 		String backgroundNodeScoreAttribute = "";
 		AbsentNodeScoreTreatment absentNodeScoreTreatment = null;
 		
@@ -336,6 +362,7 @@ public class OptionsPanel extends JFrame implements ActionListener{
 		
 		connectivity = Double.parseDouble(tfConnectivity.getText());
 		nodeScoreAttribute = (String)cbbNodeScoreAttribute.getSelectedItem();
+		edgeScoreAttribute = (String)cbbEdgeScoreAttribute.getSelectedItem();
 		backgroundNodeScoreAttribute = (String)cbbBackgroundNodeScoreAttribute.getSelectedItem();
 		
 		
@@ -358,7 +385,7 @@ public class OptionsPanel extends JFrame implements ActionListener{
 		if (!error)
 		{
 			dispatchEvent(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
-			mainTaskFactory = new MoBaSMainTaskFactory(utils, projectName, nodeScoreMethod, edgeScoreMethod, permutations, connectivity, nodeScoreAttribute, backgroundNodeScoreAttribute, absentNodeScoreTreatment);
+			mainTaskFactory = new MoBaSMainTaskFactory(utils, projectName, nodeScoreMethod, edgeScoreMethod, permutations, connectivity, nodeScoreAttribute, backgroundNodeScoreAttribute, absentNodeScoreTreatment, edgeScoreAttribute);
 			utils.getTaskManager().execute(mainTaskFactory.createTaskIterator());
 		}
 	}

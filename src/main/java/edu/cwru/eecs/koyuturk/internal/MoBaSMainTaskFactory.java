@@ -17,6 +17,7 @@ public class MoBaSMainTaskFactory extends AbstractTaskFactory{
 	private String nodeScoreAttribute;
 	private String backgroundNodeScoreAttribute;
 	private AbsentNodeScoreTreatment absentNodeScoreTreatment;
+	private String edgeScoreAttribute;
 	
 	// Utils
 	MoBaSUtilities utils;
@@ -24,7 +25,8 @@ public class MoBaSMainTaskFactory extends AbstractTaskFactory{
 	public MoBaSMainTaskFactory(MoBaSUtilities utils, String projectName,
 			NodeScoreMethod nodeScoreMethod, EdgeScoreMethod edgeScoreMethod,
 			int permutations, double connectivity, String nodeScoreAttribute,
-			String backgroundNodeScoreAttribute, AbsentNodeScoreTreatment absentNodeScoreTreatment)
+			String backgroundNodeScoreAttribute, AbsentNodeScoreTreatment absentNodeScoreTreatment,
+			String edgeScoreAttribute)
 	{
 		this.utils = utils;
 		this.projectName = projectName;
@@ -35,6 +37,7 @@ public class MoBaSMainTaskFactory extends AbstractTaskFactory{
 		this.nodeScoreAttribute = nodeScoreAttribute;
 		this.backgroundNodeScoreAttribute = backgroundNodeScoreAttribute;
 		this.absentNodeScoreTreatment = absentNodeScoreTreatment;
+		this.edgeScoreAttribute = edgeScoreAttribute;
 	}
 	
 	public TaskIterator createTaskIterator()
@@ -43,7 +46,7 @@ public class MoBaSMainTaskFactory extends AbstractTaskFactory{
 				this.nodeScoreMethod, this.edgeScoreMethod,
 				this.permutations, this.connectivity,
 				this.nodeScoreAttribute, this.backgroundNodeScoreAttribute,
-				this.absentNodeScoreTreatment));
+				this.absentNodeScoreTreatment, this.edgeScoreAttribute));
 	}
 	
 }
